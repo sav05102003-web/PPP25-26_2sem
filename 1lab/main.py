@@ -276,17 +276,6 @@ class Board:
         if self.is_valid_position(pos):
             self.grid[pos.row][pos.col] = piece
 
-    def move_piece(self, move: Move) -> bool:
-        piece = self.get_piece(move.from_pos)
-        if not piece:
-            return False
-
-        if piece.can_move_to(self, move.from_pos, move.to_pos):
-            self.set_piece(move.to_pos, piece)
-            self.set_piece(move.from_pos, None)
-            piece.has_moved = True
-            return True
-        return False
 
     def display(self):
         print("  a b c d e f g h")
@@ -300,21 +289,24 @@ class Board:
                     print(".", end=" ")
             print()
 
-    def move_piece(self, move: Move) -> bool:
+
+    def move_piece(self, move: Move, current_color: Color) -> bool:
         piece = self.get_piece(move.from_pos)
         if not piece:
             return False
 
         if piece.can_move_to(self, move.from_pos, move.to_pos):
             captured = self.get_piece(move.to_pos)
-            entry = MoveHistoryEntry(move, captured, piece, self.current_color)
+            entry = MoveHistoryEntry(move, captured, piece, current_color) 
             self.history.append(entry)
+
 
             self.set_piece(move.to_pos, piece)
             self.set_piece(move.from_pos, None)
             piece.has_moved = True
             return True
         return False
+
 
     def undo_last_move(self) -> bool:
         if not self.history:
@@ -346,14 +338,16 @@ class ChessGame:
         from_position = Position(from_row, from_col)
         to_position = Position(to_row, to_col)
 
+
         move = Move(from_position, to_position)
         piece = self.board.get_piece(from_position)
 
         if (piece and piece.color == self.current_color and
-                self.board.move_piece(move)):
+            self.board.move_piece(move, self.current_color)):  
             self.switch_turn()
             return True
         return False
+
 
     def _parse_position(self, pos_str: str) -> Tuple[int, int]:
         col = ord(pos_str[0].lower()) - ord('a')
@@ -397,25 +391,6 @@ class ChessGame:
                     print("Неверный формат хода. Используйте формат 'e2 e4'.")
                                       
 
-
-    def play(self):
-        print("Добро пожаловать в шахматы! Введите ход в формате 'e2 e4'")
-        while not self.game_over:
-            self.board.display()
-            print(f"Ход {self.current_color.value}:")
-            move_input = input("Введите ход: ").strip()
-
-            if move_input.lower() == 'quit':
-                break
-
-            try:
-                from_pos, to_pos = move_input.split()
-                if self.make_move(from_pos, to_pos):
-                    print("Ход выполнен!")
-                else:
-                    print("Неверный ход, попробуйте снова.")
-            except ValueError:
-                print("Неверный формат хода. Используйте формат 'e2 e4'.")
 
 class CheckersPiece(Piece):
     def __init__(self, color: Color, is_king: bool = False):
@@ -480,7 +455,7 @@ class CheckersGame:
         piece = self.board.get_piece(from_position)
 
         if (piece and piece.color == self.current_color and
-                self.board.move_piece(move)):
+                self.board.move_piece(move,self.current_color)):
             if (self.current_color == Color.WHITE and to_row == 0) or \
                (self.current_color == Color.BLACK and to_row == 7):
                 if isinstance(piece, CheckersPiece):
@@ -532,4 +507,3 @@ if __name__ == "__main__":
         print("Неверный выбор. Запускаю шахматы по умолчанию.")
         game = ChessGame()
         game.play()
-
