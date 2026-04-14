@@ -48,18 +48,15 @@ class Pawn(Piece):
         direction = -1 if self.color == Color.WHITE else 1
         start_row = 6 if self.color == Color.WHITE else 1
 
-        # Обычный ход вперёд
         new_pos = Position(pos.row + direction, pos.col)
         if board.is_valid_position(new_pos) and not board.get_piece(new_pos):
             moves.append(Move(pos, new_pos))
 
-            # Ход на две клетки с начальной позиции
             if pos.row == start_row:
                 double_pos = Position(pos.row + 2 * direction, pos.col)
                 if not board.get_piece(double_pos):
                     moves.append(Move(pos, double_pos))
 
-        # Взятие по диагонали
         for col_offset in (-1, 1):
             attack_pos = Position(pos.row + direction, pos.col + col_offset)
             if (board.is_valid_position(attack_pos) and
@@ -105,10 +102,9 @@ class Gryphon(Piece):
             jump_pos = Position(pos.row + dr1, pos.col + dc1)
             if not board.is_valid_position(jump_pos):
                 continue
-            if board.get_piece(jump_pos):  # Если на пути фигура — прыжок невозможен
+            if board.get_piece(jump_pos):  
                 continue
 
-            # После прыжка — дополнительный ход на 1 клетку
             for dr2, dc2 in [(-1, -1), (-1, 0), (-1, 1), (0, -1),
                              (0, 1), (1, -1), (1, 0), (1, 1)]:
                 final_pos = Position(jump_pos.row + dr2, jump_pos.col + dc2)
@@ -127,7 +123,7 @@ class Phoenix(Piece):
                    (1, 1), (1, -1), (-1, 1), (-1, -1)]  # диагонали
 
         for dr, dc in directions:
-            for step in range(1, 4):  # 1–3 клетки
+            for step in range(1, 4):  
                 new_row, new_col = pos.row + dr * step, pos.col + dc * step
                 new_pos = Position(new_row, new_col)
 
@@ -139,9 +135,9 @@ class Phoenix(Piece):
                     moves.append(Move(pos, new_pos))
                 elif piece.color != self.color:
                     moves.append(Move(pos, new_pos))
-                    break  # Взятие — дальше не идёт
+                    break  
                 else:
-                    break  # Своя фигура — дальше не идёт
+                    break  
         return moves
 
 class Unicorn(Piece):
@@ -153,14 +149,12 @@ class Unicorn(Piece):
         knight_moves = [(-2, -1), (-2, 1), (-1, -2), (-1, 2),
                         (1, -2), (1, 2), (2, -1), (2, 1)]
 
-        # Первый прыжок
         for dr1, dc1 in knight_moves:
             first_jump = Position(pos.row + dr1, pos.col + dc1)
             if (not board.is_valid_position(first_jump) or
-                board.get_piece(first_jump)):  # Если клетка занята — первый прыжок невозможен
+                board.get_piece(first_jump)):  
                 continue
 
-            # Второй прыжок из промежуточной позиции
             for dr2, dc2 in knight_moves:
                 second_jump = Position(first_jump.row + dr2, first_jump.col + dc2)
                 if (board.is_valid_position(second_jump) and
@@ -215,7 +209,6 @@ class Queen(Piece):
 
 
     def get_valid_moves(self, board: 'Board', pos: Position) -> List[Move]:
-        # Объединяем ходы ладьи и слона
         rook = Rook(self.color)
         bishop = Bishop(self.color)
         return rook.get_valid_moves(board, pos) + bishop.get_valid_moves(board, pos)
@@ -253,12 +246,10 @@ class Board:
         self.history = []
 
     def _setup_initial_position(self):
-         # Расстановка пешек
         for col in range(8):
             self.grid[1][col] = Pawn(Color.BLACK)
             self.grid[6][col] = Pawn(Color.WHITE)
 
-        # Расстановка остальных фигур с добавлением оригинальных
         back_row_pieces = [
             Rook,      # a1/a8
             Knight,    # b1/b8
@@ -291,7 +282,6 @@ class Board:
             return False
 
         if piece.can_move_to(self, move.from_pos, move.to_pos):
-            # Выполняем ход
             self.set_piece(move.to_pos, piece)
             self.set_piece(move.from_pos, None)
             piece.has_moved = True
@@ -316,12 +306,10 @@ class Board:
             return False
 
         if piece.can_move_to(self, move.from_pos, move.to_pos):
-            # Сохраняем информацию для отката
             captured = self.get_piece(move.to_pos)
             entry = MoveHistoryEntry(move, captured, piece, self.current_color)
             self.history.append(entry)
 
-            # Выполняем ход
             self.set_piece(move.to_pos, piece)
             self.set_piece(move.from_pos, None)
             piece.has_moved = True
@@ -335,12 +323,9 @@ class Board:
         entry = self.history.pop()
         move = entry.move
 
-        # Возвращаем фигуру на исходное место
         self.set_piece(move.from_pos, entry.moved_piece)
-        # Восстанавливаем захваченную фигуру (если была)
         self.set_piece(move.to_pos, entry.captured_piece)
 
-        # Откатываем флаг «ходила»
         entry.moved_piece.has_moved = False
 
         return True
@@ -355,7 +340,6 @@ class ChessGame:
         self.current_color = Color.BLACK if self.current_color == Color.WHITE else Color.WHITE
 
     def make_move(self, from_pos: str, to_pos: str) -> bool:
-        # Преобразуем нотацию в позиции
         from_row, from_col = self._parse_position(from_pos)
         to_row, to_col = self._parse_position(to_pos)
 
@@ -380,7 +364,7 @@ class ChessGame:
         for _ in range(steps):
             if not self.board.undo_last_move():
                 return False
-        self.switch_turn()  # Откатываем ход назад
+        self.switch_turn()  
         return True
 
     def play(self):
@@ -453,7 +437,6 @@ class CheckersPiece(Piece):
             if board.is_valid_position(new_pos) and not board.get_piece(new_pos):
                 moves.append(Move(pos, new_pos))
 
-            # Взятие
             jump_row, jump_col = pos.row + 2 * dr, pos.col + 2 * dc
             jump_pos = Position(jump_row, jump_col)
             middle_pos = Position(pos.row + dr, pos.col + dc)
@@ -498,7 +481,6 @@ class CheckersGame:
 
         if (piece and piece.color == self.current_color and
                 self.board.move_piece(move)):
-            # Проверка превращения в дамку
             if (self.current_color == Color.WHITE and to_row == 0) or \
                (self.current_color == Color.BLACK and to_row == 7):
                 if isinstance(piece, CheckersPiece):
